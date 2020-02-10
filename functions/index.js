@@ -18,10 +18,12 @@ exports.newrelicToWorkspaceChat = functions.https.onRequest((request, response) 
   console.log(request.body);
 
   const message = request.body.incident_url
-  sendMessage(request.body.details, request.body.incident_url, response);
+  sendMessage(request.body.details, request.body.incident_url, () => {
+    response.send("Message sent to Workspace Chat");
+  });
 });
 
-function sendMessage(message, link, response) {
+function sendMessage(message, link, callback) {
   graphapi({
     method: 'POST',
     url: '/' + TARGET_GROUP + '/feed',
@@ -29,14 +31,14 @@ function sendMessage(message, link, response) {
       'message': message,
       'link': link
     }
-  }, (error, faceResp, body) => {
+  }, (error, response, body) => {
     if (error) {
       console.error("Error from Facebook: " + error);
     } else {
-      console.log("Response from Facebook: " + faceResp.body);
-      response.send("Message sent to Workspace Chat");
+      console.log("Response from Facebook: " + response.body);
       var post_id = JSON.parse(body).id;
       console.log('Published ' + post_id);
+      return callback();
     }
   });
 }
